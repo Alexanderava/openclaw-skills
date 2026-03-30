@@ -1,0 +1,181 @@
+# Auto Backup 配置
+# 自动备份配置
+
+# 备份目标目录
+backup:
+  # 备份根目录（默认为桌面 OpenClaw_Backups）
+  dir: "~/Desktop/OpenClaw_Backups"
+  
+  # 创建目录如果不存在
+  create_dir: true
+
+# 备份源配置
+sources:
+  # 记忆文件
+  - path: "~/.openclaw/memory"
+    label: "memory_files"
+    enabled: true
+    patterns:
+      - "**/*.md"
+      - "**/*.txt"
+      - "**/*.json"
+    exclude:
+      - "**/*.tmp"
+      - "**/*.bak"
+  
+  # 配置文件
+  - path: "~/.openclaw/openclaw.json"
+    label: "config_file"
+    enabled: true
+    patterns:
+      - "*.json"
+  
+  # 自定义技能
+  - path: "~/.openclaw/skills"
+    label: "custom_skills"
+    enabled: true
+    patterns:
+      - "**/SKILL.md"
+      - "**/*.yaml"
+      - "**/*.yml"
+      - "**/*.py"
+      - "**/*.json"
+      - "**/*.sh"
+  
+  # 对话历史（如果存在）
+  - path: "~/.openclaw/conversations"
+    label: "conversations"
+    enabled: false  # 默认禁用，需要手动启用
+    patterns:
+      - "**/*.json"
+      - "**/*.log"
+  
+  # 日志文件
+  - path: "~/.openclaw/logs"
+    label: "logs"
+    enabled: false  # 默认禁用
+    patterns:
+      - "**/*.log"
+      - "**/*.txt"
+
+# 压缩配置
+compression:
+  # 压缩算法：none, gzip, bzip2, xz
+  algorithm: "gzip"
+  
+  # 压缩级别（1-9，gzip/bzip2）
+  level: 6
+  
+  # 启用压缩（总大小 > 阈值）
+  min_size: "100KB"  # 小于此大小不压缩
+
+# 保留策略
+retention:
+  # 保留天数
+  days: 30
+  
+  # 最大备份数量
+  max_count: 100
+  
+  # 最大总大小
+  max_total_size: "5GB"
+  
+  # 清理旧备份
+  auto_cleanup: true
+
+# 验证配置
+verification:
+  # 备份后验证完整性
+  enabled: true
+  
+  # 校验和算法
+  checksum: "sha256"  # md5, sha1, sha256
+  
+  # 验证文件列表
+  verify_file_list: true
+
+# 索引配置
+index:
+  # 创建备份索引
+  enabled: true
+  
+  # 索引文件路径
+  file: "backup_index.json"
+  
+  # 索引内容
+  include_details: true
+
+# 性能配置
+performance:
+  # 最大文件大小（单个文件）
+  max_file_size: "100MB"
+  
+  # 批量处理文件数
+  batch_size: 100
+  
+  # 备份超时（秒）
+  timeout: 300
+  
+  # 压缩线程数（0 = 自动）
+  compression_threads: 0
+
+# 日志配置
+logging:
+  # 日志级别
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  
+  # 备份日志文件
+  file: "backup.log"
+  
+  # 日志格式
+  format: "%(asctime)s - %(levelname)s - %(message)s"
+
+# 通知配置
+notification:
+  # 备份成功通知
+  on_success: false
+  
+  # 备份失败通知
+  on_failure: true
+  
+  # 通知方式（可扩展）
+  # webhook: "https://example.com/notify"
+  # sound: true  # 播放提示音（macOS）
+
+# 排除规则（全局）
+exclude:
+  # 按模式排除
+  patterns:
+    - "**/*.tmp"
+    - "**/*.bak"
+    - "**/*.swp"
+    - "**/.DS_Store"
+    - "**/Thumbs.db"
+  
+  # 按大小排除（大于此大小的文件）
+  max_file_size: "500MB"
+  
+  # 临时文件（修改时间在 N 分钟内）
+  exclude_recent: 5  # 分钟
+
+# 备份标签（用于分类）
+labels:
+  # 自动标签
+  auto_label: true
+  
+  # 自定义标签
+  custom:
+    - "daily"
+    - "weekly"
+    - "manual"
+
+# 恢复配置
+restore:
+  # 恢复前备份当前数据
+  backup_before_restore: true
+  
+  # 恢复确认
+  require_confirmation: true
+  
+  # 恢复日志
+  log_restore: true

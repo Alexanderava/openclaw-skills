@@ -1,0 +1,141 @@
+# LLM Unified Gateway 配置
+# 多模型统一调用网关配置
+
+# 支持的模型配置
+models:
+  gpt-4:
+    provider: openai
+    api_base: https://api.openai.com/v1
+    model_name: gpt-4
+    max_tokens: 4096
+    temperature: 0.7
+    cost_per_1k_tokens: 0.03
+    enabled: true
+    priority: 1
+
+  gpt-3.5-turbo:
+    provider: openai
+    api_base: https://api.openai.com/v1
+    model_name: gpt-3.5-turbo
+    max_tokens: 4096
+    temperature: 0.7
+    cost_per_1k_tokens: 0.0015
+    enabled: true
+    priority: 2
+
+  gemini-pro:
+    provider: google
+    api_base: https://generativelanguage.googleapis.com/v1
+    model_name: gemini-pro
+    max_tokens: 4096
+    temperature: 0.7
+    cost_per_1k_tokens: 0.0  # 目前免费
+    enabled: true
+    priority: 1
+
+  gemini-1.5-pro:
+    provider: google
+    api_base: https://generativelanguage.googleapis.com/v1
+    model_name: gemini-1.5-pro
+    max_tokens: 8192
+    temperature: 0.7
+    cost_per_1k_tokens: 0.0
+    enabled: true
+    priority: 1
+
+  minimax-m2.5:
+    provider: minimax
+    api_base: https://api.minimax.chat/v1
+    model_name: minimax-m2.5
+    max_tokens: 4096
+    temperature: 0.7
+    cost_per_1k_tokens: 0.01
+    enabled: true
+    priority: 2
+
+  glm-4:
+    provider: zhipuai
+    api_base: https://open.bigmodel.cn/api/paas/v4
+    model_name: glm-4
+    max_tokens: 4096
+    temperature: 0.7
+    cost_per_1k_tokens: 0.005
+    enabled: true
+    priority: 2
+
+  local-model:
+    provider: local
+    api_base: http://localhost:8000/v1  # 可配置本地模型地址
+    model_name: local-model
+    max_tokens: 4096
+    temperature: 0.7
+    cost_per_1k_tokens: 0.0
+    enabled: false  # 默认禁用，需要手动启用
+    priority: 3
+
+# 负载均衡策略
+load_balancing:
+  strategy: round_robin  # round_robin, weighted, priority, least_latency
+  weights:
+    gpt-4: 1.0
+    gpt-3.5-turbo: 2.0
+    gemini-pro: 3.0
+    gemini-1.5-pro: 2.0
+    minimax-m2.5: 1.5
+    glm-4: 2.0
+    local-model: 1.0
+
+# 失败重试配置
+retry:
+  max_attempts: 3
+  backoff_strategy: exponential  # exponential, linear, fixed
+  initial_delay: 1.0  # 初始延迟（秒）
+  max_delay: 60.0  # 最大延迟（秒）
+  retry_on:
+    - timeout
+    - rate_limit
+    - network_error
+    - server_error
+
+# 超时配置
+timeout:
+  connect: 10.0  # 连接超时（秒）
+  read: 30.0  # 读取超时（秒）
+  total: 60.0  # 总超时（秒）
+
+# 健康检查
+health_check:
+  enabled: true
+  interval: 300  # 检查间隔（秒）
+  timeout: 10.0  # 健康检查超时（秒）
+  retry_count: 2  # 失败重试次数
+
+# 速率限制处理
+rate_limit:
+  auto_retry: true
+  respect_retry_after: true
+  max_wait_time: 300.0  # 最大等待时间（秒）
+
+# 输出格式
+output:
+  include_usage: true
+  include_cost: true
+  include_latency: true
+  include_model: true
+  include_timestamp: true
+
+# 日志配置
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  file: null  # null 表示输出到控制台，可设置为文件路径
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# 默认模型（当未指定时使用）
+default_model: gpt-4
+
+# 备用模型顺序（当主模型失败时）
+fallback_models:
+  - gemini-pro
+  - glm-4
+  - gpt-3.5-turbo
+  - minimax-m2.5

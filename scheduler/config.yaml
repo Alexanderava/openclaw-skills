@@ -1,0 +1,126 @@
+# Scheduler 配置
+# 定时任务调度器配置
+
+# 任务存储配置
+tasks:
+  # 任务列表文件路径
+  file: "~/.openclaw/scheduler_tasks.json"
+  
+  # 自动创建文件如果不存在
+  auto_create: true
+  
+  # 默认任务（首次运行时使用）
+  default_tasks:
+    - id: "health-check"
+      name: "系统健康检查"
+      enabled: true
+      cron: "0 */6 * * *"  # 每 6 小时
+      timezone: "Asia/Shanghai"
+      action:
+        skill: "local-exec"
+        method: "execute"
+        params:
+          command: "echo 'System health check'"
+      on_failure:
+        retry: true
+        max_retries: 2
+
+# 调度器配置
+scheduler:
+  # 时区
+  timezone: "Asia/Shanghai"
+  
+  # 最大并发任务数
+  max_concurrent_tasks: 5
+  
+  # 任务执行超时（秒）
+  task_timeout: 300
+  
+  # 错过任务处理
+  misfire_grace_time: 60  # 允许错过的秒数
+  
+  # 任务线程池配置
+  thread_pool:
+    max_workers: 10
+
+# 日志配置
+logging:
+  # 日志文件路径
+  file: "~/.openclaw/scheduler.log"
+  
+  # 日志级别
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  
+  # 日志格式
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # 日志轮转
+  rotation:
+    enabled: true
+    max_size: "10MB"  # 单个日志文件最大大小
+    backup_count: 5   # 保留的历史日志文件数
+
+# 执行记录
+execution:
+  # 是否记录执行历史
+  record_history: true
+  
+  # 历史记录文件
+  history_file: "~/.openclaw/scheduler_history.json"
+  
+  # 保留历史记录天数
+  keep_days: 30
+
+# 失败重试
+retry:
+  # 任务失败时自动重试
+  enabled: true
+  
+  # 最大重试次数
+  max_retries: 3
+  
+  # 重试延迟策略
+  delay_strategy: "exponential"  # exponential, fixed
+  
+  # 初始延迟（秒）
+  initial_delay: 60
+  
+  # 最大延迟（秒）
+  max_delay: 3600
+
+# 通知配置
+notification:
+  # 任务失败时通知
+  on_failure: false
+  
+  # 任务成功时通知
+  on_success: false
+  
+  # 通知方式（可扩展）
+  # webhook: "https://example.com/notify"
+  # email: "user@example.com"
+
+# 安全限制
+security:
+  # 最大任务数
+  max_tasks: 100
+  
+  # 禁止的操作（正则表达式列表）
+  forbidden_patterns:
+    - "rm -rf /"
+    - "dd if="
+    - ":\(\)\\{ :|:\& \\}"
+  
+  # 命令白名单（如果设置，只允许这些命令）
+  # command_whitelist: []
+
+# OpenClaw 集成
+openclaw:
+  # OpenClaw 配置文件路径
+  config_file: "~/.openclaw/openclaw.json"
+  
+  # 技能调用超时
+  skill_timeout: 60
+  
+  # 技能调用重试
+  skill_retry: 2

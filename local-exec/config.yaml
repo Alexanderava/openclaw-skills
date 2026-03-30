@@ -1,0 +1,364 @@
+# Local Exec 配置
+# 安全命令执行器配置
+
+# 权限级别
+# - readonly: 只读命令（查看系统信息、日志等）
+# - readwrite: 读写命令（复制、移动文件等）
+# - admin: 管理命令（重启服务、关机等）
+permission_level: "readonly"
+
+# 安全设置
+security:
+  # 需要用户确认才能执行
+  require_confirmation: true
+  
+  # 启用详细日志
+  enable_logging: true
+  
+  # 日志文件路径
+  log_file: "~/.openclaw/exec.log"
+  
+  # 命令执行超时（秒）
+  command_timeout: 60
+  
+  # 最大输出大小（限制输出长度）
+  max_output_size: "1MB"
+  
+  # 允许访问的路径列表（如果为空则不限制）
+  allowed_paths:
+    - "~/.openclaw"
+    - "~/Desktop"
+    - "~/Documents"
+    - "/tmp"
+    - "/var/tmp"
+  
+  # 禁止访问的路径列表
+  forbidden_paths:
+    - "/etc"
+    - "/usr/bin"
+    - "/usr/sbin"
+    - "/bin"
+    - "/sbin"
+    - "/root"
+    - "/System"  # macOS
+    - "/private/etc"  # macOS
+  
+  # 危险命令模式（正则表达式）
+  dangerous_patterns:
+    - "rm\s+-rf\s+/"
+    - "dd\s+if="
+    - "mkfs\\."
+    - ":\\(\\)\s*\\{\\s*:|:\\&\\s*\\}"
+    - "chmod\s+-R\s+777\s+/"
+    - ">\s*/dev/sd"
+    - "\\|\s*sh\s*$"
+    - "\\|\s*bash\s*$"
+    - "wget\s+.*\\|.*sh"
+    - "curl\s+.*\\|.*sh"
+  
+  # 需要特权确认的操作
+  privileged_commands:
+    - "sudo"
+    - "shutdown"
+    - "reboot"
+    - "halt"
+    - "poweroff"
+    - "mount"
+    - "umount"
+    - "fdisk"
+    - "parted"
+    - "iptables"
+    - "firewall-cmd"
+    - "systemctl\s+stop\s+.+",
+    - "systemctl\s+disable\s+.+",
+    - "kill\s+-9"
+    - "pkill\s+-9"
+
+# 命令白名单（按权限级别）
+commands:
+  readonly:
+    # 系统信息
+    - "uname"
+    - "uptime"
+    - "whoami"
+    - "hostname"
+    - "date"
+    - "env"
+    - "which"
+    - "history"
+    
+    # 文件查看
+    - "ls"
+    - "cat"
+    - "head"
+    - "tail"
+    - "grep"
+    - "find"
+    - "file"
+    - "stat"
+    - "wc"
+    - "pwd"
+    - "du"
+    
+    # 系统状态
+    - "ps"
+    - "df"
+    - "free"
+    - "uptime"
+    - "vmstat"
+    - "iostat"
+    - "top"
+    - "htop"
+    
+    # 网络
+    - "ping"
+    - "curl"
+    - "wget"
+    - "netstat"
+    - "ss"
+    - "lsof"
+    - "ifconfig"
+    - "ip"
+    - "host"
+    - "dig"
+    - "nslookup"
+    - "traceroute"
+    - "mtr"
+    
+    # 工具
+    - "echo"
+    - "printf"
+    - "test"
+    - "true"
+    - "false"
+    - "sleep"
+  
+  readwrite:
+    # 包含所有 readonly 命令
+    - "cp"
+    - "mv"
+    - "rm"
+    - "touch"
+    - "mkdir"
+    - "rmdir"
+    - "tee"
+    - "chmod"
+    - "chown"
+    - "ln"
+    - "zip"
+    - "unzip"
+    - "tar"
+    - "gzip"
+    - "gunzip"
+    - "bzip2"
+    - "bunzip2"
+    - "xz"
+    - "unxz"
+    - "7z"
+    - "sh"
+    - "bash"
+    - "dash"
+    - "zsh"
+  
+  admin:
+    # 包含所有 readonly 和 readwrite 命令
+    - "sudo"
+    - "systemctl"
+    - "service"
+    - "kill"
+    - "pkill"
+    - "killall"
+    - "shutdown"
+    - "reboot"
+    - "halt"
+    - "poweroff"
+    - "mount"
+    - "umount"
+    - "fdisk"
+    - "parted"
+    - "iptables"
+    - "firewall-cmd"
+    - "ufw"
+    - "dmesg"
+    - "journalctl"
+    - "strace"
+    - "ltrace"
+
+# 预定义命令模板
+templates:
+  # 系统信息
+  system-info:
+    command: "uname -a && uptime && df -h && free -h"
+    permission: readonly
+    description: "查看系统基本信息"
+  
+  # 查看日志
+  tail-log:
+    command: "tail -n {lines} {file}"
+    permission: readonly
+    params:
+      file: {type: string, required: true}
+      lines: {type: integer, default: 50}
+    description: "查看日志文件末尾"
+  
+  # 重启服务
+  restart-service:
+    command: "systemctl restart {service}"
+    permission: admin
+    params:
+      service: {type: string, required: true}
+    confirm: true
+    description: "重启系统服务"
+  
+  # 检查磁盘
+  check-disk:
+    command: "df -h {path}"
+    permission: readonly
+    params:
+      path: {type: string, default: "/"}
+    description: "查看磁盘空间使用"
+  
+  # 运行脚本
+  run-script:
+    command: "{script} {args}"
+    permission: readwrite
+    params:
+      script: {type: string, required: true}
+      args: {type: array, default: [], item_type: string}
+    validate_script: true
+    description: "执行脚本文件"
+  
+  # 清理临时文件
+  cleanup-temp:
+    command: "find {path} -name '*.tmp' -type f -mtime +1 -delete"
+    permission: readwrite
+    params:
+      path: {type: string, default: "/tmp"}
+    confirm: true
+    description: "清理临时文件"
+  
+  # 网络测试
+  test-network:
+    command: "ping -c {count} {host}"
+    permission: readonly
+    params:
+      host: {type: string, default: "8.8.8.8"}
+      count: {type: integer, default: 3}
+    description: "测试网络连通性"
+  
+  # 查看进程
+  check-process:
+    command: "ps aux | grep {pattern} | grep -v grep"
+    permission: readonly
+    params:
+      pattern: {type: string, required: true}
+    description: "查看匹配进程"
+  
+  # 杀死进程
+  kill-process:
+    command: "kill {signal} {pid}"
+    permission: admin
+    params:
+      pid: {type: integer, required: true}
+      signal: {type: string, default: "-TERM"}
+    confirm: true
+    description: "终止进程"
+  
+  # 查看端口
+  check-port:
+    command: "netstat -tlnp | grep :{port} || ss -tlnp | grep :{port} || lsof -i :{port}"
+    permission: readonly
+    params:
+      port: {type: integer, required: true}
+    description: "查看端口占用"
+  
+  # 查看环境变量
+  check-env:
+    command: "env | grep {pattern}"
+    permission: readonly
+    params:
+      pattern: {type: string, default: ""}
+    description: "查看环境变量"
+  
+  # 创建目录
+  create-dir:
+    command: "mkdir -p {path}"
+    permission: readwrite
+    params:
+      path: {type: string, required: true}
+    description: "创建目录"
+  
+  # 删除目录
+  remove-dir:
+    command: "rm -rf {path}"
+    permission: readwrite
+    params:
+      path: {type: string, required: true}
+    confirm: true
+    validate_path: true
+    description: "删除目录（危险操作）"
+  
+  # 复制文件
+  copy-file:
+    command: "cp {source} {dest}"
+    permission: readwrite
+    params:
+      source: {type: string, required: true}
+      dest: {type: string, required: true}
+    validate_paths: true
+    description: "复制文件"
+  
+  # 移动文件
+  move-file:
+    command: "mv {source} {dest}"
+    permission: readwrite
+    params:
+      source: {type: string, required: true}
+      dest: {type: string, required: true}
+    validate_paths: true
+    description: "移动文件"
+
+# 日志配置
+logging:
+  # 日志级别
+  level: INFO
+  
+  # 日志格式
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # 日志轮转
+  rotation:
+    enabled: true
+    max_size: "10MB"
+    backup_count: 5
+
+# 缓存配置
+cache:
+  # 启用结果缓存
+  enabled: true
+  
+  # 缓存目录
+  dir: "~/.openclaw/exec_cache"
+  
+  # 缓存过期时间（秒）
+  expire_time: 3600
+  
+  # 最大缓存大小
+  max_size: "100MB"
+
+# 沙箱配置
+sandbox:
+  # 启用沙箱模式
+  enabled: false
+  
+  # 沙箱类型（chroot, docker, none）
+  type: "none"
+  
+  # chroot 目录
+  chroot_dir: "/tmp/sandbox"
+  
+  # 资源限制
+  limits:
+    cpu: 50  # CPU 使用率限制（百分比）
+    memory: "1GB"  # 内存限制
+    processes: 10  # 最大进程数
